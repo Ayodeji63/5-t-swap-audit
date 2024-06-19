@@ -290,6 +290,20 @@ contract TSwapPool is ERC20 {
         revertIfZero(outputReserves)
         returns (uint256 inputAmount)
     {
+        // x * y = (x + ∆x) * (y − ∆y)
+
+        // x * y = (x + ∆x) * (y − outputAmount)
+
+        // x * y = xy - xoutputAmount + ∆x*y - ∆x*outputAmount
+
+        // x*outputAmount = ∆x*y - ∆x*outputAmount
+
+        // x*outputAmount = ∆x(y - outputAmount)
+
+        // inputReserves  * outputAmount = inputAmount(outputReserves - outputAmount)
+        
+        // (inputReserves  * outputAmount) / (outputReserves - outputAmount) = inputAmount
+        
         return
             ((inputReserves * outputAmount) * 10000) /
             ((outputReserves - outputAmount) * 997);
