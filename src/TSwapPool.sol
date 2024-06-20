@@ -111,6 +111,7 @@ contract TSwapPool is ERC20 {
     /// derived from the amount of WETH the user is going to deposit
     /// @param deadline The deadline for the transaction to be completed by
     // q hey, if it's empty, how does it "warm up"?
+    // e: looked up
     function deposit(
         uint256 wethToDeposit,
         uint256 minimumLiquidityTokensToMint,
@@ -202,6 +203,7 @@ contract TSwapPool is ERC20 {
     /// @param wethToDeposit The amount of WETH the user is going to deposit
     /// @param poolTokensToDeposit The amount of pool tokens the user is going to deposit
     /// @param liquidityTokensToMint The amount of liquidity tokens the user is going to mint
+    // e: looked up
     function _addLiquidityMintAndTransfer(
         uint256 wethToDeposit,
         uint256 poolTokensToDeposit,
@@ -226,6 +228,7 @@ contract TSwapPool is ERC20 {
     /// @param minWethToWithdraw The minimum amount of WETH the user wants to withdraw
     /// @param minPoolTokensToWithdraw The minimum amount of pool tokens the user wants to withdraw
     /// @param deadline The deadline for the transaction to be completed by
+    // e: looked up
     function withdraw(
         uint256 liquidityTokensToBurn,
         uint256 minWethToWithdraw,
@@ -321,11 +324,15 @@ contract TSwapPool is ERC20 {
         
         // (inputReserves  * outputAmount) / (outputReserves - outputAmount) = inputAmount
         // @audit-info: magic numbers should be defined as constants
+        // @audit-high
+        // IMPACT: HIGH -> users are charged way too much!
+        // LIKELIHOOD: HIGH -> swapExactOutput is one of the main swapping functions
         return
             ((inputReserves * outputAmount) * 10000) /
             ((outputReserves - outputAmount) * 997);
     }
 
+    // @audit-info: where is the natspec
     function swapExactInput(
         IERC20 inputToken,
         uint256 inputAmount,
