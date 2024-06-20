@@ -14,6 +14,7 @@ contract Invariant is StdInvariant, Test {
     // These pools have 2 assets
     ERC20Mock weth;
     ERC20Mock poolToken;
+    
     Handler handler;
 
     // We are gonna need the contracts

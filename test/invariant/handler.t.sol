@@ -10,6 +10,7 @@ contract Handler is Test {
     TSwapPool pool;
     ERC20Mock weth;
     ERC20Mock poolToken;
+
     address liquidityProvider = makeAddr("liquidityProvider");
     address swapper = makeAddr("swapper");
     // Ghose variables
@@ -73,6 +74,17 @@ contract Handler is Test {
         startingX = int256(poolToken.balanceOf(address(pool)));
         expectedDeltaY = int256(wethAmount);
         expectedDeltaX = int256(pool.getPoolTokensToDepositBasedOnWeth(wethAmount));
+
+        // startingY == wethDeposited = 50 == y
+        // startingX == poolTokensDeposited = 100 == x
+        // assume wethAmount = 40 == ∆y
+        // ∆x = 80
+
+        // x * y = (x + ∆x) * (y − ∆y)
+
+        // 100 * 50 = (100 + 80) * (50 - 40)
+        // 5000 = 5000 - 4000 + 4000 - 3200 
+        // 5000 = 5000 - 3200
 
 
         // deposit
