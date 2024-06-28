@@ -12,7 +12,7 @@
  * \-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/|\-/
  */
 // SPDX-License-Identifier: GNU General Public License v3.0
-pragma solidity 0.8.20;
+pragma solidity ^0.8.20;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -116,7 +116,7 @@ contract TSwapPool is ERC20 {
         uint256 wethToDeposit,
         uint256 minimumLiquidityTokensToMint,
         uint256 maximumPoolTokensToDeposit,
-        // @audit - high! deadline not being used
+        // @reported deadline not being used
         // if someone sets a deadline, let's say, next block
         // they could still deposit!!! 
         // IMPACT: HIGH: a user expects a deposit to fail, will go through. Severe disruption of functionality 
@@ -128,7 +128,7 @@ contract TSwapPool is ERC20 {
         returns (uint256 liquidityTokensToMint)
     {
         if (wethToDeposit < MINIMUM_WETH_LIQUIDITY) {
-            // @audit-info: MINIMUM_WETH_LIQUIDITY is a global variable, it can be looked up
+            // @reported: MINIMUM_WETH_LIQUIDITY is a global variable, it can be looked up
             revert TSwapPool__WethDepositAmountTooLow(
                 MINIMUM_WETH_LIQUIDITY,
                 wethToDeposit
@@ -136,7 +136,7 @@ contract TSwapPool is ERC20 {
         }
         if (totalLiquidityTokenSupply() > 0) {
             uint256 wethReserves = i_wethToken.balanceOf(address(this));
-            // @audit-gas: unused variable
+            // @reported: unused variable
             uint256 poolTokenReserves = i_poolToken.balanceOf(address(this));
             // Our invariant says weth, poolTokens, and liquidity tokens must always have the same ratio after the
             // initial deposit
@@ -193,7 +193,7 @@ contract TSwapPool is ERC20 {
             // - external call
             // - updating a variable
             // Like what we have down here, you should be nervous
-            // @audit-info - it would be better if this was before the `__addLiquidityMintAndTransfer` call 
+            // @reported - it would be better if this was before the `__addLiquidityMintAndTransfer` call 
             // to follow CEI
             liquidityTokensToMint = wethToDeposit;
         }
@@ -210,7 +210,7 @@ contract TSwapPool is ERC20 {
         uint256 liquidityTokensToMint
     ) private {
         _mint(msg.sender, liquidityTokensToMint);
-        // @audit-low: The emitted event is wrong, it should be emit LiquidityAdded(msg.sender, wethToDeposit, poolTokensToDeposit);
+        // @reported: The emitted event is wrong, it should be emit LiquidityAdded(msg.sender, wethToDeposit, poolTokensToDeposit);
         emit LiquidityAdded(msg.sender, poolTokensToDeposit, wethToDeposit);
 
         // e: follows CEI
@@ -323,8 +323,8 @@ contract TSwapPool is ERC20 {
         // inputReserves  * outputAmount = inputAmount(outputReserves - outputAmount)
         
         // (inputReserves  * outputAmount) / (outputReserves - outputAmount) = inputAmount
-        // @audit-info: magic numbers should be defined as constants
-        // @audit-high
+        // @areported: magic numbers should be defined as constants
+        // @reported-high
         // IMPACT: HIGH -> users are charged way too much!
         // LIKELIHOOD: HIGH -> swapExactOutput is one of the main swapping functions
         return
