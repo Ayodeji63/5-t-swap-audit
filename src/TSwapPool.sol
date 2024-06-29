@@ -332,7 +332,7 @@ contract TSwapPool is ERC20 {
             ((outputReserves - outputAmount) * 997);
     }
 
-    // @audit-info: where is the natspec
+    // @reported: where is the natspec
     function swapExactInput(
         IERC20 inputToken,
         uint256 inputAmount,
@@ -340,11 +340,11 @@ contract TSwapPool is ERC20 {
         uint256 minOutputAmount,
         uint64 deadline
     )
-        // @audit-info: this should be external
+        // @reported: this should be external
         public
         revertIfZero(inputAmount)
         revertIfDeadlinePassed(deadline)
-        // @audit-low: unused variable as output
+        // @reported: unused variable as output
         // IMPACT: super-low
         // LIKELIHOOD: Medium
         returns (uint256 output)
@@ -376,6 +376,7 @@ contract TSwapPool is ERC20 {
      * @param outputToken ERC20 token to send to caller
      * @param outputAmount The exact amount of tokens to send to caller
      */
+    // @reported: No Slippage coverage
     function swapExactOutput(
         IERC20 inputToken,
         IERC20 outputToken,
@@ -403,10 +404,14 @@ contract TSwapPool is ERC20 {
      * @notice wrapper function to facilitate users selling pool tokens in exchange of WETH
      * @param poolTokenAmount amount of pool tokens to sell
      * @return wethAmount amount of WETH received by caller
+     * 
      */
     function sellPoolTokens(
         uint256 poolTokenAmount
     ) external returns (uint256 wethAmount) {
+        // pool token -> WETH
+        // @reported this is wrong!!!
+        // 
         return
             swapExactOutput(
                 i_poolToken,

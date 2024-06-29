@@ -18,8 +18,8 @@ contract Invariant is StdInvariant, Test {
     PoolFactory factory;
     TSwapPool pool;
 
-    int256 constant STARTING_X = 100e18;
-    int256 constant STARTING_Y = 50e18;
+    uint256 constant STARTING_X = 1000e18;
+    uint256 constant STARTING_Y = 100e18;
     uint256 initialLiquidity = 100e18;
 
     uint256 inputAmount = 10e18;
@@ -42,14 +42,14 @@ contract Invariant is StdInvariant, Test {
 
         // pool.deposit(uint256(STARTING_Y), uint256(STARTING_Y), uint256(STARTING_X), uint64(block.timestamp));
         vm.startPrank(liquidityProvider);
-        weth.approve(address(pool), initialLiquidity);
-        poolToken.approve(address(pool), initialLiquidity);
-        poolToken.mint(liquidityProvider, initialLiquidity);
-        weth.mint(liquidityProvider, initialLiquidity);
+        weth.approve(address(pool), type(uint256).max);
+        poolToken.approve(address(pool), type(uint256).max);
+        poolToken.mint(liquidityProvider, STARTING_X);
+        weth.mint(liquidityProvider, STARTING_Y);
         pool.deposit({
-            wethToDeposit: initialLiquidity,
+            wethToDeposit: STARTING_Y,
             minimumLiquidityTokensToMint: 0,
-            maximumPoolTokensToDeposit: initialLiquidity,
+            maximumPoolTokensToDeposit: STARTING_X,
             deadline: uint64(block.timestamp)
         });
         vm.stopPrank();
@@ -67,10 +67,9 @@ contract Invariant is StdInvariant, Test {
     }
 
     function testFlawedSwapExactOutput() public {
-
         // User has 11 pool tokens
         address someUser = makeAddr("someUser");
-        uint256 userInitialPoolTokenBalance = 11e18;
+        uint256 userInitialPoolTokenBalance = 11 ether;
         poolToken.mint(someUser, userInitialPoolTokenBalance);
         vm.startPrank(someUser);
 
@@ -98,19 +97,58 @@ contract Invariant is StdInvariant, Test {
     }
 
     function testFlawedSwapExactInput() public {
-     // User has 11 pool tokens
-     address someUser = makeAddr("someUser");
-     uint256 userInitialPoolTokenBalance = 11e18;
-     poolToken.mint(someUser, userInitialPoolTokenBalance);
-     vm.startPrank(someUser);
+        // User has 11 pool tokens
+        address someUser = makeAddr("someUser");
+        uint256 userInitialPoolTokenBalance = 11e18;
+        poolToken.mint(someUser, userInitialPoolTokenBalance);
+        vm.startPrank(someUser);
 
-     // Users buys 1 WETH from the pool,
-     poolToken.approve(address(pool), type(uint256).max);
-     uint256 expectedOutputAmount = pool.getOutputAmountBasedOnInput(1 ether, poolToken.balanceOf(address(pool)), weth.balanceOf(address(pool)));
-     uint256 returnOutputAmount = pool.swapExactInput(poolToken, 1 ether, weth, expectedOutputAmount, uint64(block.timestamp));
+        // Users buys 1 WETH from the pool,
+        poolToken.approve(address(pool), type(uint256).max);
+        uint256 expectedOutputAmount = pool.getOutputAmountBasedOnInput(
+            1 ether,
+            poolToken.balanceOf(address(pool)),
+            weth.balanceOf(address(pool))
+        );
+        uint256 returnOutputAmount = pool.swapExactInput(
+            poolToken,
+            1 ether,
+            weth,
+            expectedOutputAmount,
+            uint64(block.timestamp)
+        );
 
-     // assert returnOutputAmount less than expectedOutPutAmount
-     assertLt(returnOutputAmount, expectedOutputAmount);
-     vm.stopPrank();
+        // assert returnOutputAmount less than expectedOutPutAmount
+        assertLt(returnOutputAmount, expectedOutputAmount);
+        vm.stopPrank();
+    }
+
+    function test_SwapExactOutput_to_spend_more_user_token() public {
+        // user 1
+        address user1 = makeAddr("user1");
+        poolToken.mint(user1, 11e18);
+
+        vm.startPrank(user1);
+        poolToken.approve(address(pool), type(uint256).max);
+        pool.swapExactOutput(poolToken, weth, 1 ether, uint64(block.timestamp));
+        console.log("Balance of User1 is %d", weth.balanceOf(user1));
+        vm.stopPrank();
+    }
+
+    function testFlawed_sellPoolTokens() public {
+        uint256 userAmount = 150 ether;
+        address user1 = makeAddr("user1");
+
+        vm.startPrank(user1);
+        // User mint 11 poolTokens
+        poolToken.mint(address(user1), userAmount);
+        poolToken.approve(address(pool), type(uint256).max);
+        // user decides to sell 1 poolToken to get WETH tokens
+        pool.sellPoolTokens(1 ether);
+
+        // user will get 1 WETH because sellPoolTokens receive 1 ether for the outputAmount rather than for the inputAmount
+        assertEq(weth.balanceOf(address(user1)), 1 ether);
+        console.log("This is the user balance: %d", poolToken.balanceOf(user1));
+        vm.stopPrank();
     }
 }
