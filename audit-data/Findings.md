@@ -158,22 +158,16 @@ Consider changing the implementation to use `swapExactInput` instead of `swapExa
 +        uint256 minWethToReceive
     ) external returns (uint256 wethAmount) {
 
--        return
+        return
 -            swapExactOutput(
--                i_poolToken,
--                i_wethToken,
--                poolTokenAmount,
--                uint64(block.timestamp)
--            );
-
-+        return
 +            swapExactOutput(
-+                i_poolToken,
-+                poolTokenAmount,
-+                i_wethToken,
-+                minOutputAmount
-+                uint64(block.timestamp)
-+            );
+                i_poolToken,
+                poolTokenAmount,
+                i_wethToken,
++                minWethToReceive
+                uint64(block.timestamp)
+            );
+
     }
 
 ```
